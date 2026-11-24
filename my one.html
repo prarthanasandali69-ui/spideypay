@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d0f14">
+<title>SpideyPay — Fast & Secure USD Exchange</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12151c;
+  --black:#0a0c10;
+  --muted:#647084;
+  --red:#e12d39;
+  --red-dark:#9b111e;
+  --red-black:linear-gradient(135deg, #e12d39 0%, #12151c 100%);
+  --red-black-hover:linear-gradient(135deg, #f23845 0%, #07080b 100%);
+  --green:#14a66a;
+  --line:#e5e9f0;
+  --shadow:0 22px 55px rgba(10, 12, 16, 0.09);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font-family:'DM Sans',sans-serif;background:#ffffff;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button,input{font:inherit}
+.wrap{width:min(1120px,calc(100% - 40px));margin:auto;position:relative;z-index:2}
+
+/* ================= PRELOADER ANIMATION ================= */
+#spidey-loader{
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle at center, #1b1116 0%, #08090c 75%);
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  transition:opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.65s;
+}
+#spidey-loader.hidden{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+.loader-web{
+  position:absolute;
+  width:420px;
+  height:420px;
+  opacity:0.16;
+  animation:spinSlow 24s linear infinite;
+}
+.loader-mask{
+  width:84px;
+  height:84px;
+  border-radius:24px;
+  background:linear-gradient(145deg, #232834, #090b0f);
+  border:2px solid rgba(225, 45, 57, 0.6);
+  display:grid;
+  place-items:center;
+  box-shadow:0 0 40px rgba(225, 45, 57, 0.45), inset 0 0 15px rgba(225, 45, 57, 0.25);
+  animation:maskDrop 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.loader-mask svg{width:58px;height:58px}
+.loader-title{
+  margin-top:20px;
+  font:800 32px Manrope;
+  letter-spacing:-1px;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:2px;
+  opacity:0;
+  animation:titleReveal 0.6s ease 0.35s forwards;
+}
+.loader-title span{
+  color:var(--red);
+  text-shadow:0 0 18px rgba(225, 45, 57, 0.7);
+}
+.loader-bar{
+  width:150px;
+  height:3px;
+  background:rgba(255,255,255,0.12);
+  border-radius:10px;
+  margin-top:14px;
+  overflow:hidden;
+  opacity:0;
+  animation:titleReveal 0.5s ease 0.45s forwards;
+}
+.loader-bar i{
+  display:block;
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg, #e12d39, #ff6b75);
+  border-radius:10px;
+  animation:barFill 1.25s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+}
+
+/* ================= SUBTLE CLEAN WEB BACKGROUND ================= */
+.bg-web-layer{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+.bg-web-top-right{
+  position:absolute;
+  top:-60px;
+  right:-60px;
+  width:520px;
+  height:520px;
+  opacity:0.045;
+  animation:webBreathe 9s ease-in-out infinite;
+}
+.bg-web-bottom-left{
+  position:absolute;
+  bottom:-90px;
+  left:-90px;
+  width:460px;
+  height:460px;
+  opacity:0.035;
+  transform:rotate(180deg);
+}
+.web-node{
+  position:absolute;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:var(--red);
+  opacity:0.22;
+  animation:floatNode 7s ease-in-out infinite;
+}
+.web-node:nth-child(3){top:24%;left:14%;animation-delay:0s}
+.web-node:nth-child(4){top:62%;left:8%;background:var(--black);animation-delay:2s}
+.web-node:nth-child(5){top:32%;right:12%;animation-delay:1.5s}
+.web-node:nth-child(6){top:75%;right:18%;background:var(--black);animation-delay:3.2s}
+
+/* ================= HEADER ================= */
+.top{height:76px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(255,255,255,0.9);backdrop-filter:blur(14px);z-index:10}
+.nav{height:100%;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:11px;font:800 22px Manrope;letter-spacing:-.8px;color:var(--black)}
+.logo{
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(145deg, #242936, #0a0c10);
+  border:1.5px solid rgba(225, 45, 57, 0.45);
+  box-shadow:0 6px 16px rgba(13, 15, 20, 0.22);
+  animation:maskbob 3.8s ease-in-out infinite;
+}
+.logo svg{width:32px;height:32px}
+.brand em{
+  font-style:normal;
+  background:linear-gradient(135deg, #e12d39 20%, #111318 95%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.links{display:flex;gap:28px;color:#556073;font-size:14px;font-weight:600}
+.links a{transition:.2s}
+.links a:hover{color:var(--red)}
+.right{display:flex;align-items:center;gap:11px}
+.icon-link{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;background:#fff;transition:.2s}
+.icon-link:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#cbd3df}
+.icon-link svg,.social svg{width:19px;height:19px;fill:currentColor}
+.icon-link.wa{color:#16a66a}
+.icon-link.tg{color:#229bd7}
+.contact{
+  background:var(--red-black);
+  color:white;
+  border:0;
+  border-radius:10px;
+  padding:11px 18px;
+  font-weight:700;
+  font-size:14px;
+  box-shadow:0 6px 16px rgba(225, 45, 57, 0.22);
+  transition:.2s;
+}
+.contact:hover{background:var(--red-black-hover);transform:translateY(-1px)}
+.hamb{display:none;border:0;background:#f2f4f7;border-radius:9px;width:39px;height:39px;font-size:21px;color:var(--black)}
+
+/* ================= HERO SECTION ================= */
+.hero{padding:76px 0 64px;position:relative}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center}
+
+.eyebrow{
+  color:var(--black);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  font-weight:800;
+  display:inline-flex;
+  gap:9px;
+  align-items:center;
+  background:#f8f9fc;
+  border:1px solid #e4e8f0;
+  padding:6px 14px;
+  border-radius:30px;
+}
+.pulse{width:8px;height:8px;background:var(--red);border-radius:50%;box-shadow:0 0 0 4px rgba(225, 45, 57, 0.2);animation:pulseDot 2s infinite}
+
+.hero h1{font:800 clamp(40px,5vw,58px)/1.08 Manrope;letter-spacing:-2.4px;margin:20px 0 16px;color:var(--black)}
+.hero h1 span{
+  background:linear-gradient(135deg, #e12d39 15%, #12151c 95%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.hero p{color:var(--muted);max-width:460px;line-height:1.75;font-size:16px;margin:0 0 26px}
+
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn{border-radius:11px;padding:14px 20px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:9px;transition:.2s;cursor:pointer;border:0}
+.btn:hover{transform:translateY(-2px)}
+.btn-red{
+  background:var(--red-black);
+  color:#fff;
+  box-shadow:0 10px 24px rgba(225, 45, 57, 0.24), 0 4px 10px rgba(10, 12, 16, 0.16);
+}
+.btn-red:hover{background:var(--red-black-hover)}
+.btn-outline{border:1.5px solid #dce2ec;background:#fff;color:var(--black)}
+.btn-outline:hover{border-color:var(--black);background:#f9fafc}
+.btn svg{width:19px;height:19px;fill:currentColor}
+
+.trust-pills{display:flex;gap:18px;margin-top:24px;flex-wrap:wrap}
+.trust-pill{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#525e72}
+.trust-pill svg{width:15px;height:15px;color:var(--red)}
+
+/* ================= INSTANT QUOTE INTERFACE ================= */
+.quote-card{
+  background:#ffffff;
+  border:1px solid #e3e8f0;
+  border-top:3.5px solid var(--red);
+  border-radius:22px;
+  padding:28px;
+  box-shadow:var(--shadow);
+  position:relative;
+  animation:cardfloat 6s ease-in-out infinite;
+}
+.quote-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.quote-head strong{font:800 19px Manrope;color:var(--black);letter-spacing:-.4px}
+.status-badge{
+  font-size:11px;
+  color:var(--green);
+  font-weight:700;
+  background:#edfaf4;
+  border:1px solid #d1f2e2;
+  padding:6px 11px;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.status-badge i{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+.switch{display:flex;padding:5px;background:#f1f4f9;border-radius:11px;margin-bottom:18px}
+.switch button{
+  flex:1;
+  border:0;
+  background:transparent;
+  padding:11px;
+  border-radius:8px;
+  color:#647084;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.22s;
+}
+.switch button.active{
+  background:var(--black);
+  color:#fff;
+  box-shadow:0 4px 12px rgba(10, 12, 16, 0.22);
+}
+
+.field-label{display:block;font-size:12px;font-weight:700;color:var(--black);margin-bottom:8px}
+.input-row{display:flex;border:1.5px solid #dce2ec;border-radius:12px;overflow:hidden;transition:.2s;background:#fff}
+.input-row:focus-within{border-color:var(--red);box-shadow:0 0 0 3px rgba(225, 45, 57, 0.1)}
+.input-row input{border:0;outline:0;min-width:0;flex:1;padding:14px 15px;font-size:20px;font-weight:800;color:var(--black)}
+.input-row span{padding:14px 16px;background:#f6f8fb;border-left:1px solid #e5e9f0;font-size:13px;font-weight:800;color:var(--black);display:grid;place-items:center}
+
+.quick-amounts{display:flex;gap:8px;margin-top:10px;margin-bottom:18px}
+.chip{
+  flex:1;
+  padding:7px 0;
+  border-radius:8px;
+  border:1px solid #e3e8f0;
+  background:#fafbfd;
+  font-size:12px;
+  font-weight:700;
+  color:#525e72;
+  cursor:pointer;
+  transition:.15s;
+}
+.chip:hover{border-color:var(--black);color:var(--black);background:#fff}
+
+.info-banner{
+  background:#f8f9fc;
+  border:1px dashed #d4dce8;
+  border-radius:12px;
+  padding:13px 15px;
+  margin-bottom:18px;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  font-size:12.5px;
+  color:#525e72;
+  line-height:1.5;
+}
+.info-banner svg{width:20px;height:20px;color:var(--red);flex-shrink:0}
+
+.btn-group-stack{display:flex;flex-direction:column;gap:10px}
+.full{width:100%;justify-content:center}
+.btn-tg-outline{
+  width:100%;
+  justify-content:center;
+  border:1.5px solid #dce2ec;
+  background:#fff;
+  color:var(--black);
+}
+.btn-tg-outline:hover{border-color:#229bd7;color:#1884ba;background:#f5fbff}
+
+/* ================= STEPS SECTION ================= */
+.section{padding:60px 0}
+.section-head{text-align:center;margin-bottom:34px}
+.section-head h2{font:800 31px Manrope;letter-spacing:-1px;margin:0 0 9px;color:var(--black)}
+.section-head p{color:var(--muted);margin:0;font-size:14.5px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step{
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:25px;
+  background:#fff;
+  box-shadow:0 8px 28px rgba(10, 12, 16, 0.03);
+  transition:.25s;
+}
+.step:hover{border-color:rgba(225, 45, 57, 0.35);transform:translateY(-3px);box-shadow:var(--shadow)}
+.step-icon{
+  width:44px;
+  height:44px;
+  border-radius:13px;
+  background:var(--red-black);
+  display:grid;
+  place-items:center;
+  color:#fff;
+  font-weight:800;
+  font-size:15px;
+  margin-bottom:16px;
+}
+.step h3{font:700 17px Manrope;margin:0 0 8px;color:var(--black)}
+.step p{font-size:13.5px;line-height:1.65;color:var(--muted);margin:0}
+
+/* ================= ABOUT & TRUST SECTION ================= */
+.about-card{
+  background:linear-gradient(135deg, #0d0f14 0%, #171217 55%, #2b0f15 100%);
+  border:1px solid rgba(225, 45, 57, 0.32);
+  border-radius:24px;
+  padding:38px;
+  color:#fff;
+  box-shadow:0 24px 60px rgba(10, 12, 16, 0.16);
+}
+.about-top{
+  display:grid;
+  grid-template-columns:1.35fr .65fr;
+  gap:32px;
+  align-items:center;
+}
+.about-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-size:11.5px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:#ff6b75;
+  background:rgba(225, 45, 57, 0.14);
+  border:1px solid rgba(225, 45, 57, 0.3);
+  padding:6px 12px;
+  border-radius:20px;
+  margin-bottom:14px;
+}
+.about-card h2{
+  font:800 clamp(26px,3.2vw,34px)/1.15 Manrope;
+  letter-spacing:-1px;
+  margin:0 0 12px;
+  color:#fff;
+}
+.about-card p.about-desc{
+  margin:0;
+  color:#cfd6e3;
+  font-size:14.5px;
+  line-height:1.75;
+}
+.about-stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.stat-box{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:16px;
+  padding:18px;
+  text-align:center;
+}
+.stat-box strong{
+  display:block;
+  font:800 24px Manrope;
+  color:#fff;
+  margin-bottom:4px;
+}
+.stat-box span{
+  font-size:12px;
+  color:#b6c0d1;
+  font-weight:500;
+}
+.advisor-strip{
+  margin-top:26px;
+  padding-top:22px;
+  border-top:1px solid rgba(255,255,255,0.12);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.advisor-badge{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:13.5px;
+  color:#e4e9f2;
+}
+.advisor-badge i{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#f7b500;
+  box-shadow:0 0 12px rgba(247, 181, 0, 0.7);
+}
+
+/* ================= CONTACT BANNER ================= */
+.contact-box{
+  border-radius:22px;
+  background:linear-gradient(135deg, #0d0f14 0%, #1d1014 60%, #471118 100%);
+  border:1px solid rgba(225, 45, 57, 0.35);
+  padding:34px 38px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  color:#fff;
+  box-shadow:0 22px 50px rgba(10, 12, 16, 0.16);
+}
+.contact-box h2{font:800 24px Manrope;margin:0 0 7px;color:#fff}
+.contact-box p{margin:0;color:#cbd2df;font-size:14px}
+.socials{display:flex;gap:11px}
+.social{border-radius:11px;padding:13px 18px;color:white;display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;transition:.2s}
+.social:hover{transform:translateY(-2px)}
+.social.wa{background:#16a66a}
+.social.tg{background:#229bd7}
+
+/* ================= FOOTER ================= */
+.footer{border-top:1px solid var(--line);padding:26px 0;color:#8490a1;font-size:12px;margin-top:60px;background:#fff;position:relative;z-index:2}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.disclaimer{max-width:600px;text-align:right;line-height:1.5}
+.mobile-social{display:none}
+
+/* ================= KEYFRAMES ================= */
+@keyframes maskDrop{
+  0%{opacity:0;transform:translateY(-40px) scale(0.7)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes titleReveal{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes barFill{
+  to{width:100%}
+}
+@keyframes spinSlow{
+  to{transform:rotate(360deg)}
+}
+@keyframes webBreathe{
+  0%,100%{transform:scale(1) rotate(0deg)}
+  50%{transform:scale(1.04) rotate(2deg)}
+}
+@keyframes floatNode{
+  0%,100%{transform:translateY(0px)}
+  50%{transform:translateY(-14px)}
+}
+@keyframes pulseDot{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.3);opacity:0.7}
+}
+@keyframes maskbob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-2px) rotate(-3deg)}}
+@keyframes cardfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+@media(max-width:860px){
+  .about-top{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .wrap{width:calc(100% - 32px)}
+  .links{display:none;position:absolute;top:75px;left:0;right:0;background:white;padding:17px 22px;border-bottom:1px solid var(--line);flex-direction:column;gap:18px}
+  .links.show{display:flex}
+  .hamb{display:block}
+  .right>.icon-link,.contact{display:none}
+  .hero{padding:45px 0 38px}
+  .hero-grid{grid-template-columns:1fr;gap:34px}
+  .hero h1{font-size:44px}
+  .quote-card{max-width:500px;width:100%;margin:auto}
+  .steps{grid-template-columns:1fr}
+  .section{padding:43px 0}
+  .about-card{padding:26px}
+  .contact-box{align-items:flex-start;flex-direction:column;padding:26px}
+  .footer{margin-top:38px}
+  .foot{align-items:flex-start;flex-direction:column}
+  .disclaimer{text-align:left}
+  .mobile-social{display:flex;gap:9px;margin-top:16px}
+  .mobile-social .icon-link{width:40px;height:40px}
+}
+</style>
+</head>
+<body>
+
+<!-- SPIDER-MAN INTRO LOADER -->
+<div id="spidey-loader">
+  <svg class="loader-web" viewBox="0 0 200 200" fill="none" stroke="#e12d39" stroke-width="0.8">
+    <circle cx="100" cy="100" r="25"/><circle cx="100" cy="100" r="50"/><circle cx="100" cy="100" r="75"/><circle cx="100" cy="100" r="98"/>
+    <path d="M100 0V200M0 100H200M29 29L171 171M171 29L29 171"/>
+  </svg>
+  <div class="loader-mask">
+    <svg viewBox="0 0 40 40">
+      <defs>
+        <linearGradient id="blackMask" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#2b303c"/>
+          <stop offset="55%" stop-color="#111318"/>
+          <stop offset="100%" stop-color="#050608"/>
+        </linearGradient>
+      </defs>
+      <path fill="url(#blackMask)" stroke="#e12d39" stroke-width="1" d="M20 3C12 3 6.5 8 7 16.5c.4 7 4.5 14.5 13 20.5 8.5-6 12.6-13.5 13-20.5C33.5 8 28 3 20 3z"/>
+      <g stroke="#525b70" stroke-width="0.65" fill="none" opacity="0.8">
+        <path d="M20 3.5V36.5"/><path d="M7.5 13.5L20 18l12.5-4.5"/><path d="M7.5 20.5L20 18l12.5 2.5"/><path d="M10.5 28L20 18l9.5 10"/><path d="M13 6.5L20 18l7-11.5"/>
+      </g>
+      <path fill="#ffffff" stroke="#08090c" stroke-width="1.3" stroke-linejoin="round" d="M9.2 14.2c3.5.4 7.2 2.2 9.1 5.1-2.5 2.3-6.6 2.2-8.9-.6-1.1-1.3-1.2-3.1-.2-4.5z"/>
+      <path fill="#ffffff" stroke="#08090c" stroke-width="1.3" stroke-linejoin="round" d="M30.8 14.2c-3.5.4-7.2 2.2-9.1 5.1 2.5 2.3 6.6 2.2 8.9-.6 1.1-1.3 1.2-3.1.2-4.5z"/>
+    </svg>
+  </div>
+  <div class="loader-title">Spidey<span>Pay</span></div>
+  <div class="loader-bar"><i></i></div>
+</div>
+
+<!-- CLEAN SPIDER-WEB BACKGROUND LAYER -->
+<div class="bg-web-layer" aria-hidden="true">
+  <svg class="bg-web-top-right" viewBox="0 0 300 300" fill="none" stroke="#0a0c10" stroke-width="1.2">
+    <path d="M300 0L0 300M300 0L100 300M300 0L210 300M300 0L0 210M300 0L0 100"/>
+    <path d="M240 0C240 35 265 60 300 60"/>
+    <path d="M175 0C175 72 228 125 300 125"/>
+    <path d="M110 0C110 108 192 190 300 190"/>
+    <path d="M45 0C45 145 155 255 300 255"/>
+  </svg>
+  <svg class="bg-web-bottom-left" viewBox="0 0 300 300" fill="none" stroke="#e12d39" stroke-width="1.2">
+    <path d="M300 0L0 300M300 0L100 300M300 0L210 300M300 0L0 210M300 0L0 100"/>
+    <path d="M240 0C240 35 265 60 300 60"/>
+    <path d="M175 0C175 72 228 125 300 125"/>
+    <path d="M110 0C110 108 192 190 300 190"/>
+  </svg>
+  <span class="web-node"></span>
+  <span class="web-node"></span>
+  <span class="web-node"></span>
+  <span class="web-node"></span>
+</div>
+
+<!-- HEADER -->
+<header class="top">
+  <div class="wrap nav">
+    <a class="brand" href="#home">
+      <span class="logo" aria-label="SpideyPay black Spider-Man mask">
+        <svg viewBox="0 0 40 40" role="img" aria-hidden="true">
+          <path fill="url(#blackMask)" stroke="#e12d39" stroke-width="0.9" d="M20 3C12 3 6.5 8 7 16.5c.4 7 4.5 14.5 13 20.5 8.5-6 12.6-13.5 13-20.5C33.5 8 28 3 20 3z"/>
+          <g stroke="#4b5366" stroke-width="0.65" fill="none" opacity="0.75">
+            <path d="M20 3.5V36.5"/><path d="M7.5 13.5L20 18l12.5-4.5"/><path d="M7.5 20.5L20 18l12.5 2.5"/><path d="M10.5 28L20 18l9.5 10"/><path d="M13 6.5L20 18l7-11.5"/>
+          </g>
+          <path fill="#ffffff" stroke="#08090c" stroke-width="1.3" stroke-linejoin="round" d="M9.2 14.2c3.5.4 7.2 2.2 9.1 5.1-2.5 2.3-6.6 2.2-8.9-.6-1.1-1.3-1.2-3.1-.2-4.5z"/>
+          <path fill="#ffffff" stroke="#08090c" stroke-width="1.3" stroke-linejoin="round" d="M30.8 14.2c-3.5.4-7.2 2.2-9.1 5.1 2.5 2.3 6.6 2.2 8.9-.6 1.1-1.3 1.2-3.1.2-4.5z"/>
+        </svg>
+      </span>
+      Spidey<em>Pay</em>
+    </a>
+    <nav class="links" id="links">
+      <a href="#home">Home</a>
+      <a href="#quote">Request Quote</a>
+      <a href="#how">How it works</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="right">
+      <a class="icon-link wa" id="headWa" href="#" aria-label="WhatsApp" title="WhatsApp"></a>
+      <a class="icon-link tg" id="headTg" href="#" aria-label="Telegram" title="Telegram"></a>
+      <a class="contact" id="headContact" href="#">Contact us</a>
+      <button class="hamb" aria-label="Open menu" onclick="document.getElementById('links').classList.toggle('show')">☰</button>
+    </div>
+  </div>
+</header>
+
+<main id="home">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow"><i class="pulse"></i> Fast · Secure · Direct</div>
+        <h1>Dollar exchange,<br><span>made simple.</span></h1>
+        <p>Need to buy or sell USD? Select your exchange type and amount to request today's best live rate directly from our team.</p>
+        <div class="actions">
+          <a class="btn btn-red" id="heroWa" href="#"></a>
+          <a class="btn btn-outline" href="#about">About Spidey Pay &nbsp;↓</a>
+        </div>
+        <div class="trust-pills">
+          <span class="trust-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> 4+ Years Trading Field</span>
+          <span class="trust-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Bybit General Advisor</span>
+          <span class="trust-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Direct & Safe Service</span>
+        </div>
+        <div class="mobile-social">
+          <a class="icon-link wa" id="mobWa" href="#" aria-label="WhatsApp"></a>
+          <a class="icon-link tg" id="mobTg" href="#" aria-label="Telegram"></a>
+        </div>
+      </div>
+
+      <!-- INSTANT QUOTE INTERFACE -->
+      <div class="quote-card" id="quote">
+        <div class="quote-head">
+          <strong>Instant Exchange Desk</strong>
+          <span class="status-badge"><i></i> Desk Online</span>
+        </div>
+
+        <div class="switch">
+          <button id="sellTab" class="active" onclick="setMode('sell')">I want to Sell USD</button>
+          <button id="buyTab" onclick="setMode('buy')">I want to Buy USD</button>
+        </div>
+
+        <label class="field-label" for="amount">Enter USD Amount</label>
+        <div class="input-row">
+          <input id="amount" type="number" min="1" value="100" placeholder="100" aria-label="USD amount">
+          <span>USD</span>
+        </div>
+
+        <div class="quick-amounts">
+          <button type="button" class="chip" onclick="setAmount(50)">$50</button>
+          <button type="button" class="chip" onclick="setAmount(100)">$100</button>
+          <button type="button" class="chip" onclick="setAmount(250)">$250</button>
+          <button type="button" class="chip" onclick="setAmount(500)">$500</button>
+        </div>
+
+        <div class="info-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>Rates update in real-time. Message us with your amount to lock in today’s live LKR rate.</span>
+        </div>
+
+        <div class="btn-group-stack">
+          <a class="btn btn-red full" id="calcWa" href="#"></a>
+          <a class="btn btn-tg-outline" id="calcTg" href="#"></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section wrap" id="how">
+    <div class="section-head">
+      <h2>Exchange in three simple steps</h2>
+      <p>Fast, transparent, and personal service every time.</p>
+    </div>
+    <div class="steps">
+      <article class="step">
+        <div class="step-icon">01</div>
+        <h3>Choose your amount</h3>
+        <p>Select whether you want to buy or sell USD and enter your desired amount above.</p>
+      </article>
+      <article class="step">
+        <div class="step-icon">02</div>
+        <h3>Get the live rate</h3>
+        <p>Click WhatsApp or Telegram to send your request and receive our current LKR quote immediately.</p>
+      </article>
+      <article class="step">
+        <div class="step-icon">03</div>
+        <h3>Complete securely</h3>
+        <p>Confirm the rate with our team and complete your transfer safely within minutes.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ABOUT & TRUST SECTION (JANITH LAKSHAN) -->
+  <section class="section wrap" id="about">
+    <div class="about-card">
+      <div class="about-top">
+        <div>
+          <div class="about-tag">Trusted Trader & Advisor</div>
+          <h2>Hi, I’m Janith Lakshan</h2>
+          <p class="about-desc">
+            I have been active in the <strong>trading field for over 4 years</strong>, working closely with traders and digital asset users across markets. I also serve as a <strong>General Advisor at Bybit</strong>, helping community members navigate trading workflows, platform guidance, and safe dollar/digital asset handling with clarity and reliability.
+          </p>
+        </div>
+        <div class="about-stats">
+          <div class="stat-box">
+            <strong>4+ Years</strong>
+            <span>In Trading Field</span>
+          </div>
+          <div class="stat-box">
+            <strong>Bybit</strong>
+            <span>General Advisor</span>
+          </div>
+        </div>
+      </div>
+      <div class="advisor-strip">
+        <div class="advisor-badge">
+          <i></i>
+          <span>Direct personal coordination by <strong>Janith Lakshan</strong> — transparent communication before every exchange.</span>
+        </div>
+        <a class="btn btn-red" id="aboutWa" href="#"></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT BANNER -->
+  <section class="wrap" id="contact">
+    <div class="contact-box">
+      <div>
+        <h2>Ready to exchange dollars?</h2>
+        <p>Reach out directly to check today’s live rate and availability.</p>
+      </div>
+      <div class="socials">
+        <a class="social wa" id="boxWa" href="#"></a>
+        <a class="social tg" id="boxTg" href="#"></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap foot">
+    <a class="brand" href="#home">
+      <span class="logo" aria-label="SpideyPay black Spider-Man mask">
+        <svg viewBox="0 0 40 40" role="img" aria-hidden="true">
+          <path fill="url(#blackMask)" stroke="#e12d39" stroke-width="0.9" d="M20 3C12 3 6.5 8 7 16.5c.4 7 4.5 14.5 13 20.5 8.5-6 12.6-13.5 13-20.5C33.5 8 28 3 20 3z"/>
+          <g stroke="#4b5366" stroke-width="0.65" fill="none" opacity="0.75">
+            <path d="M20 3.5V36.5"/><path d="M7.5 13.5L20 18l12.5-4.5"/><path d="M7.5 20.5L20 18l12.5 2.5"/><path d="M10.5 28L20 18l9.5 10"/><path d="M13 6.5L20 18l7-11.5"/>
+          </g>
+          <path fill="#ffffff" stroke="#08090c" stroke-width="1.3" stroke-linejoin="round" d="M9.2 14.2c3.5.4 7.2 2.2 9.1 5.1-2.5 2.3-6.6 2.2-8.9-.6-1.1-1.3-1.2-3.1-.2-4.5z"/>
+          <path fill="#ffffff" stroke="#08090c" stroke-width="1.3" stroke-linejoin="round" d="M30.8 14.2c-3.5.4-7.2 2.2-9.1 5.1 2.5 2.3 6.6 2.2 8.9-.6 1.1-1.3 1.2-3.1.2-4.5z"/>
+        </svg>
+      </span>
+      Spidey<em>Pay</em>
+    </a>
+    <div class="disclaimer">SpideyPay by Janith Lakshan · All exchange rates are confirmed directly via WhatsApp or Telegram prior to any transaction.</div>
+  </div>
+</footer>
+
+<script>
+// Hide Spider-Man Preloader smoothly after page loads
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('spidey-loader').classList.add('hidden');
+  }, 1450);
+});
+
+// Your WhatsApp & Telegram details
+const WHATSAPP_NUMBER = '94710328793';
+const TELEGRAM_USERNAME = 'Janith_lakshanz';
+
+const waIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.6 4.1 1.6 5.9L.2 24l6.5-1.7a11.8 11.8 0 0 0 5.4 1.3h.1c6.5 0 11.8-5.3 11.8-11.8 0-3.1-1.2-6.1-3.5-8.3ZM12.1 21.6c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.9 1 1-3.8-.2-.4a9.7 9.7 0 1 1 8.2 4.7Zm5.3-7.3c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.7-1.6-1-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3c.1.2 2 3.1 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 2-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.6-.4Z"/></svg>';
+const tgIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.4 1.5 1.3 9.7c-1.4.6-1.4 1.4-.3 1.8l5.4 1.7 2.1 6.5c.3.8.2 1.1 1.1 1.1.7 0 1-.3 1.4-.7l2.6-2.5 5.5 4.1c1 .6 1.7.3 1.9-.9L24 2.9c.3-1.5-.6-2.1-1.6-1.4ZM8.2 12.8l11-7c.5-.3.9-.1.5.2l-9.1 8.3-.4 4.1-2-5.6Z"/></svg>';
+
+const waBase = `https://wa.me/${WHATSAPP_NUMBER}`;
+const tgBase = `https://t.me/${TELEGRAM_USERNAME}`;
+
+function setLink(id, url, html) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.href = url;
+    if (html) el.innerHTML = html;
+    el.target = '_blank';
+    el.rel = 'noopener';
+  }
+}
+
+['headWa', 'mobWa'].forEach(id => setLink(id, waBase, waIcon));
+['headTg', 'mobTg'].forEach(id => setLink(id, tgBase, tgIcon));
+setLink('headContact', waBase + '?text=' + encodeURIComponent('Hi Janith / SpideyPay, I would like to ask about USD exchange.'));
+setLink('boxWa', waBase + '?text=' + encodeURIComponent('Hi Janith / SpideyPay, please share today’s USD exchange rate.'), waIcon + ' WhatsApp');
+setLink('boxTg', tgBase, tgIcon + ' Telegram');
+setLink('heroWa', waBase + '?text=' + encodeURIComponent('Hi Janith / SpideyPay, I would like to get today’s USD rate.'), waIcon + ' Ask Today’s Rate');
+setLink('aboutWa', waBase + '?text=' + encodeURIComponent('Hi Janith, I saw your profile on SpideyPay and would like to connect.'), waIcon + ' Message Janith');
+
+let mode = 'sell';
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('sellTab').classList.toggle('active', m === 'sell');
+  document.getElementById('buyTab').classList.toggle('active', m === 'buy');
+  updateLinks();
+}
+
+function setAmount(val) {
+  document.getElementById('amount').value = val;
+  updateLinks();
+}
+
+function updateLinks() {
+  const amount = Math.max(0, Number(document.getElementById('amount').value) || 0);
+  const actionText = mode === 'sell' ? 'sell' : 'buy';
+  const msg = `Hi SpideyPay, I want to ${actionText} ${amount} USD. What is today's rate?`;
+  const encodedMsg = encodeURIComponent(msg);
+
+  setLink('calcWa', `${waBase}?text=${encodedMsg}`, `${waIcon} Get Rate on WhatsApp`);
+  setLink('calcTg', `${tgBase}?text=${encodedMsg}`, `${tgIcon} Ask on Telegram`);
+}
+
+document.getElementById('amount').addEventListener('input', updateLinks);
+updateLinks();
+</script>
+</body>
+</html>
